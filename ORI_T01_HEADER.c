@@ -31,56 +31,69 @@ int qsort_corredores_idx(const void *a, const void *b) {
 /* Função de comparação entre chaves do índice veiculos_idx */
 int qsort_veiculos_idx(const void *a, const void *b) {
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "qsort_veiculos_idx()");
+	/* segundo a documentação da função qsort, a função de comparação deve retornar:
+		- <0 se a<b; 
+		- >0 se a>b; 
+		- 0 se a=b.
+		por isso, utilizar o strcmp é a melhor solução.
+	*/
+	return strcmp( ( (veiculos_index *)a)->id_veiculo, ( (veiculos_index *)b)->id_veiculo);
+	// printf(ERRO_NAO_IMPLEMENTADO, "qsort_veiculos_idx()");
 }
 
 /* Função de comparação entre chaves do índice pistas_idx */
 int qsort_pistas_idx(const void *a, const void *b) {
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "qsort_pistas_idx()");
+	return strcmp( ((pistas_index *)a)->id_pista, ((pistas_index *)b)->id_pista );
+	// printf(ERRO_NAO_IMPLEMENTADO, "qsort_pistas_idx()");
 }
 
 /* Função de comparação entre chaves do índice corridas_idx */
 int qsort_corridas_idx(const void *a, const void *b) {
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "qsort_corridas_idx()");
+	return strcmp(((corridas_index *)a)->id_pista, ((corridas_index *)b)->id_pista);
+	// printf(ERRO_NAO_IMPLEMENTADO, "qsort_corridas_idx()");
 }
 
 /* Funções de comparação apenas entre data de ocorrencia do índice corridas_idx */
 int qsort_data_idx(const void *a, const void *b){
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "qsort_data_idx()");
+	return strcmp(((corridas_index *)a)->ocorrencia, ((corridas_index *)b)->ocorrencia);
+	// printf(ERRO_NAO_IMPLEMENTADO, "qsort_data_idx()");
 }
 
 /* Função de comparação entre chaves do índice nome_pista_idx */
 int qsort_nome_pista_idx(const void *a, const void *b){
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "qsort_nome_pista_idx()");
+	return strcmp(((nome_pista_index *)a)->id_pista, ((nome_pista_index *)b)->id_pista);
+	// printf(ERRO_NAO_IMPLEMENTADO, "qsort_nome_pista_idx()");
 }
 
 /* Função de comparação entre chaves do índice preco_veiculo_idx */
 int qsort_preco_veiculo_idx(const void *a, const void *b){
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "qsort_preco_veiculo_idx()");
+	return strcmp(((preco_veiculo_index *)a)->id_veiculo, ((preco_veiculo_index *)b)->id_veiculo);
+	// printf(ERRO_NAO_IMPLEMENTADO, "qsort_preco_veiculo_idx()");
 }
 
 /* Função de comparação entre chaves do índice secundário de corredor_veiculos_secundario_idx */
 int qsort_corredor_veiculos_secundario_idx(const void *a, const void *b){
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "qsort_corredor_veiculos_secundario_idx()");
+	return strcmp(((corredor_veiculos_secundario_index *)a)->chave_secundaria, ((corredor_veiculos_secundario_index *)b)->chave_secundaria);
+	// printf(ERRO_NAO_IMPLEMENTADO, "qsort_corredor_veiculos_secundario_idx()");
 }
 
 /* Cria o índice respectivo */
 void criar_corredores_idx() {
-    if (!corredores_idx)
+    if (!corredores_idx) // aloca espaço se o ponteiro pro vetor de corredores estiver nulo
         corredores_idx = malloc(MAX_REGISTROS * sizeof(corredores_index));
  
-    if (!corredores_idx) {
+    if (!corredores_idx) { // se o ponteiro seguir nulo, indica erro e fecha prog
         printf(ERRO_MEMORIA_INSUFICIENTE);
         exit(1);
     }
  
-    for (unsigned i = 0; i < qtd_registros_corredores; ++i) {
+    for (unsigned i = 0; i < qtd_registros_corredores; ++i) { // percorre corredores já existentes no arquivo de dados e preenche o arquivo de indices com base neles
         Corredor c = recuperar_registro_corredor(i);
  
         if (strncmp(c.id_corredor, "*|", 2) == 0)
@@ -91,7 +104,7 @@ void criar_corredores_idx() {
         strcpy(corredores_idx[i].id_corredor, c.id_corredor);
     }
  
-    qsort(corredores_idx, qtd_registros_corredores, sizeof(corredores_index), qsort_corredores_idx);
+    qsort(corredores_idx, qtd_registros_corredores, sizeof(corredores_index), qsort_corredores_idx); // mantém uma ordenação dos índices
     printf(INDICE_CRIADO, "corredores_idx");
 }
 
@@ -178,7 +191,7 @@ Corredor recuperar_registro_corredor(int rrn) {
 	p = strtok(NULL, ";");
 
 	for(int i = 0; i < QTD_MAX_VEICULO; ++i)
-		c.veiculos[i][0] = '\0';
+		c.veiculos[i][0] = '\0'; 
 
 	if(p[0] != '#') {
 		p = strtok(p, "|");
@@ -234,7 +247,7 @@ void escrever_registro_corredor(Corredor c, int rrn) {
 
 	for(int i = 0, k = 0; i < QTD_MAX_VEICULO; ++i) {
 		if(strlen(c.veiculos[i]) > 0) {
-			if (k == 0)
+			if (k == 0) // pra verificar se é o primeiro kart
 				k = 1;
 			else
 				strcat(temp, "|");
@@ -243,7 +256,7 @@ void escrever_registro_corredor(Corredor c, int rrn) {
 	}
 	strcat(temp, ";");
 
-	strpadright(temp, '#', TAM_REGISTRO_CORREDOR);
+	strpadright(temp, '#', TAM_REGISTRO_CORREDOR); // completa com # 
 
 	strncpy(ARQUIVO_CORREDORES + rrn*TAM_REGISTRO_CORREDOR, temp, TAM_REGISTRO_CORREDOR);
 }
@@ -267,7 +280,6 @@ void escrever_registro_corrida(Corrida i, int rrn) {
 void cadastrar_corredor_menu(char *id_corredor, char *nome, char *apelido){
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
 	printf(ERRO_NAO_IMPLEMENTADO, "cadastrar_corredor_menu()");
-
 }
 
 void remover_corredor_menu(char *id_corredor) {
