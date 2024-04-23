@@ -2,14 +2,15 @@
 
 - função busca_binaria_com_reps: o que é o parâmetro int retorno_se_nao_encontrado?
 
-- define TAM_REGISTRO_VEICULO, PISTA, CORRIDA: porque a somatória dá um byte a mais? (+1 no final sempre)
+- define TAM_REGISTRO_VEICULO, PISTA, CORRIDA: por que a somatória dá um byte a mais? (+1 no final sempre)
 
 - define TAM_REGISTRO_CORREDOR: não deveria somar +1? me parece que p delimitador ";" não foi considerado para o campo veiculo (deveria ser 14*3+3+1 = 46)
 
-- função cadastrar_corredor_menu: não deve haver um teste para verificar se a quantidade de registros ultrapassou o MAX_REGISTROS? (a variável global contadora qtd_registros_corredores deve ser iterada conforme a adição de novos registros). Se sim, o erro apresentado pode ser o ERRO_MEMORIA_INSUFICIENTE?
+- função cadastrar_corredor_menu, _veiculo_menu: não deve haver um teste para verificar se a quantidade de registros ultrapassou o MAX_REGISTROS? (a variável global contadora qtd_registros_corredores, _veiculos deve ser iterada conforme a adição de novos registros). Se sim, o erro apresentado pode ser o ERRO_MEMORIA_INSUFICIENTE?
 
 - [c] funcção cadastrar_corredor_menu: preciso inicializar as strings dos veículos?
 
+- função cadastrar_veiculo_menu: não faz muito sentido na minha cabeça ter que realizar uma checagem com o id_veiculo para tentativa de inserção repetida, devo seguir as instruções do doc e fazer mesmo assim?
 
 
 SET ARQUIVO_CORREDORES TO 'dados/corredores.dat';
