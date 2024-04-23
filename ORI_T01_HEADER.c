@@ -31,11 +31,11 @@ int qsort_corredores_idx(const void *a, const void *b) {
 /* Função de comparação entre chaves do índice veiculos_idx */
 int qsort_veiculos_idx(const void *a, const void *b) {
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	/* segundo a documentação da função qsort, a função de comparação deve retornar:
+	/* segundo a documentação da função qsort e bsearch, a função de comparação deve retornar:
 		- <0 se a<b; 
 		- >0 se a>b; 
 		- 0 se a=b.
-		por isso, utilizar o strcmp é a melhor solução.
+		por isso, utilizar o strcmp (para char[] ou int) foi a melhor solução.
 	*/
 	return strcmp( ( (veiculos_index *)a)->id_veiculo, ( (veiculos_index *)b)->id_veiculo);
 	// printf(ERRO_NAO_IMPLEMENTADO, "qsort_veiculos_idx()");
@@ -467,7 +467,30 @@ int inverted_list_primary_search(char result[][TAM_ID_CORREDOR], bool exibir_cam
 
 void* busca_binaria_com_reps(const void *key, const void *base0, size_t nmemb, size_t size, int (*compar)(const void *, const void *), bool exibir_caminho, int posicao_caso_repetido, int retorno_se_nao_encontrado) {
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "busca_binaria_com_reps()");
+	
+	int imin = 0, imax = nmemb-1, imid, cmp; // busca binária com intervalo inicial fixo (0, imax)
+	void *elemento, *base = base0;
+
+	printf(REGS_PERCORRIDOS);
+	while(imin <= imax){
+		imid = ((imin + imax)/2); 
+		printf(" %d", imid);
+		elemento = base + (imid * size);
+		cmp = (*compar)(key, elemento);  
+		if(cmp < 0) { // key < elemento
+			imax = imid;
+		}
+		else if(cmp > 0) { // key > elemento
+			imin = imid;
+		}
+		else { // key = elemento
+			while((*compar)(key, elemento - size) == 0) {
+				elemento = elemento - size;
+			}
+			return elemento;
+		}
+	}
+	// printf(ERRO_NAO_IMPLEMENTADO, "busca_binaria_com_reps()");
 	return (void*) -1;
 }
 

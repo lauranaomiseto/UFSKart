@@ -1,0 +1,6 @@
+*.exe
+*.o
+dados/*
+testes/*
+# notas.txt
+ORI_T01_2024.pdf
