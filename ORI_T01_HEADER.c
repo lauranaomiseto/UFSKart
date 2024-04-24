@@ -65,7 +65,7 @@ int qsort_data_idx(const void *a, const void *b){
 /* Função de comparação entre chaves do índice nome_pista_idx */
 int qsort_nome_pista_idx(const void *a, const void *b){
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	return strcmp(((nome_pista_index *)a)->id_pista, ((nome_pista_index *)b)->id_pista);
+	return strcmp(strupr(((nome_pista_index *)a)->nome), strupr(((nome_pista_index *)b)->nome));
 	// printf(ERRO_NAO_IMPLEMENTADO, "qsort_nome_pista_idx()");
 }
 
@@ -174,13 +174,32 @@ void criar_corridas_idx() {
 
 void criar_nome_pista_idx() {
     /*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "criar_nome_pista_idx()");
+	if (!nome_pista_idx)
+		nome_pista_idx = malloc(MAX_REGISTROS * sizeof(nome_pista_index));
+	
+	if(!nome_pista_idx){
+		printf(ERRO_MEMORIA_INSUFICIENTE);
+		exit(1);
+	}
+
+	for (unsigned i = 0; i < qtd_registros_pistas; ++i) {
+		Pista p = recuperar_registro_pista(i);
+		// considerando que não há operação de remoção de pistas, não é necessário testar a integridade do id_pista recuperado;
+		// como a chave nome é um campo de tam. variável no arquivo de dados das pistas, ela deve ser truncada caso exceda o tam. max do campo no arquivo de íncide. além disso, precisa ser transformada em um formato canônico
+		strncpy(nome_pista_idx[i].nome, strupr(p.nome), TAM_CHAVE_NOME_PISTA_IDX);
+		strcpy(nome_pista_idx[i].id_pista, p.id_pista);
+	}
+
+	qsort(nome_pista_idx, qtd_registros_pistas, sizeof(nome_pista_index), qsort_nome_pista_idx);
+	printf(INDICE_CRIADO, "nome_pista_idx");
+
+	// printf(ERRO_NAO_IMPLEMENTADO, "criar_nome_pista_idx()");
 }
 
 void criar_preco_veiculo_idx() {
     /*IMPLEMENTE A FUNÇÃO AQUI*/
 	if (!preco_veiculo_idx) 
-		preco_veiculo_idx = malloc(MAX_REGISTROS *sizeof(preco_veiculo_index));
+		preco_veiculo_idx = malloc(MAX_REGISTROS * sizeof(preco_veiculo_index));
 
 	if (!preco_veiculo_idx) {
 		printf(ERRO_MEMORIA_INSUFICIENTE);
@@ -190,6 +209,7 @@ void criar_preco_veiculo_idx() {
 	for (unsigned i = 0; i < qtd_registros_veiculos; ++i) {
 		Veiculo v = recuperar_registro_veiculo(i);
 		// considerando que não há operação de remoção de veículos, não é necessário testar a integridade do id_veiculo recuperado
+		// como a chave preco tem tamanho fixo no arquivo de dados dos veiculos, não é necessário truncá-lo. além disso, por ser numérico, já é canônico também.
 		preco_veiculo_idx[i].preco = v.preco;
 		strcpy(preco_veiculo_idx[i].id_veiculo, v.id_veiculo);
 	}
@@ -225,9 +245,15 @@ bool exibir_veiculo(int rrn) {
 
 bool exibir_pista(int rrn) {
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "exibir_pista()");
+	if (rrn < 0)
+		return false;
 	
-	return false;
+	Pista p = recuperar_registro_pista(rrn);
+
+	printf("%s, %s, %d, %d, %d\n", p.id_pista, p.nome, p.dificuldade, p.distancia, p.recorde);
+
+	return true;
+	// printf(ERRO_NAO_IMPLEMENTADO, "exibir_pista()");
 }
 
 bool exibir_corrida(int rrn) {
@@ -302,7 +328,6 @@ Veiculo recuperar_registro_veiculo(int rrn) {
 Pista recuperar_registro_pista(int rrn) {
 	Pista p;
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-
 	char temp[TAM_REGISTRO_PISTA + 1], *q;
 	strncpy(temp, ARQUIVO_PISTAS + (rrn * TAM_REGISTRO_PISTA), TAM_REGISTRO_PISTA);
 	temp[TAM_REGISTRO_PISTA] = '\0';
@@ -399,7 +424,24 @@ void escrever_registro_veiculo(Veiculo v, int rrn) {
 
 void escrever_registro_pista(Pista p, int rrn) {
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "escrever_registro_pista()");
+	char temp[TAM_REGISTRO_PISTA + 1], q[100];
+	temp[0] = '\0'; q[0] = '\0';
+
+	strcpy(temp, p.id_pista);
+	strcat(temp, ";");
+	strcat(temp, p.nome);
+	strcat(temp, ";");
+	sprintf(q, "%04d;", p.dificuldade);
+	strcat(temp, q);
+	sprintf(q, "%04d;", p.distancia);
+	strcat(temp, q);
+	sprintf(q, "%04d;", p.recorde);
+	strcat(temp, q);
+
+	strpadright(temp, '#', TAM_REGISTRO_PISTA);
+
+	strncpy(ARQUIVO_PISTAS + rrn * TAM_REGISTRO_PISTA, temp, TAM_REGISTRO_PISTA);
+	// printf(ERRO_NAO_IMPLEMENTADO, "escrever_registro_pista()");
 }
 
 void escrever_registro_corrida(Corrida i, int rrn) {
@@ -438,7 +480,7 @@ void cadastrar_corredor_menu(char *id_corredor, char *nome, char *apelido){
 			printf(ERRO_MEMORIA_INSUFICIENTE);
 	}
 	else 
-		printf(ERRO_PK_REPETIDA);
+		printf(ERRO_PK_REPETIDA, id_corredor);
 	
 	// printf(ERRO_NAO_IMPLEMENTADO, "cadastrar_corredor_menu()");
 }
@@ -482,7 +524,7 @@ void comprar_veiculo_menu(char *id_corredor, char *id_veiculo) {
 
 void cadastrar_veiculo_menu(char *marca, char *modelo, char *poder, int velocidade, int aceleracao, int peso, double preco) {
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	char id_veiculo[TAM_ID_VEICULO];
+	char id_veiculo[TAM_ID_VEICULO]; // TAM_ID_VEICULO já considera o byte final pro \0
 	sprintf(id_veiculo, "%07d", qtd_registros_veiculos); // formatando o id_veiculo
 
 	if (!busca_binaria(id_veiculo, veiculos_idx, qtd_registros_veiculos, sizeof(veiculos_index), qsort_veiculos_idx, false, 0)) {
@@ -522,14 +564,60 @@ void cadastrar_veiculo_menu(char *marca, char *modelo, char *poder, int velocida
 			printf(ERRO_MEMORIA_INSUFICIENTE);
 	}
 	else 
-		printf(ERRO_PK_REPETIDA);
+		printf(ERRO_PK_REPETIDA, id_veiculo);
 
 	// printf(ERRO_NAO_IMPLEMENTADO, "cadastrar_veiculo_menu()");
 }
 
 void cadastrar_pista_menu(char *nome, int dificuldade, int distancia, int recorde){
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "cadastrar_pista_menu()");
+	char id_pista[TAM_ID_PISTA]; // TAM_ID_PISTA já considera o byte final pro \0
+	sprintf(id_pista, "%08d", qtd_registros_pistas); // formatando o id_pista
+
+	// checando tentativa de cadastro com chave (nome) repetido
+	nome_pista_index index;
+	strcpy(index.nome, nome);
+	nome_pista_index *found = busca_binaria((void *)&index, nome_pista_idx, qtd_registros_pistas, sizeof(nome_pista_index), qsort_nome_pista_idx, false, 0);
+	
+	if (!found) { // se não encontrar pista com o nome informado, realiza o cadastro
+		if (qtd_registros_pistas < MAX_REGISTROS) {
+			// adicionando no arquivo de dados
+			Pista nova_pista;
+			strcpy(nova_pista.id_pista, id_pista);
+			strcpy(nova_pista.nome, nome);
+			if(!distancia)
+				nova_pista.dificuldade = 1;
+			else 
+				nova_pista.dificuldade = dificuldade;
+			nova_pista.distancia = distancia;
+			nova_pista.recorde = recorde;
+			escrever_registro_pista(nova_pista, qtd_registros_pistas);
+
+			// adicionando no "arquivo"/estrutura de índice principal
+			pistas_index nova_pista_index;
+			strcpy(nova_pista_index.id_pista, id_pista);
+			nova_pista_index.rrn = qtd_registros_pistas;
+			pistas_idx[qtd_registros_pistas] = nova_pista_index;
+
+			// adicionando no "arquivo"/estrutura de índice secundário (nome_pista_idx)
+			nome_pista_index novo_nome_pista_index;
+			strncpy(novo_nome_pista_index.nome, strupr(nome), TAM_CHAVE_NOME_PISTA_IDX);
+			strcpy(novo_nome_pista_index.id_pista, id_pista);
+			nome_pista_idx[qtd_registros_pistas] = novo_nome_pista_index;
+
+			// ordenação dos arquivos de índices principal e secundário
+			qtd_registros_pistas++;
+			qsort(pistas_idx, qtd_registros_pistas, sizeof(pistas_index), qsort_pistas_idx);
+			qsort(nome_pista_idx, qtd_registros_pistas, sizeof(nome_pista_index), qsort_nome_pista_idx);
+			printf(SUCESSO);
+		}
+		else
+			printf(ERRO_MEMORIA_INSUFICIENTE);
+	}
+	else 
+		printf(ERRO_PK_REPETIDA, nome);
+
+	// printf(ERRO_NAO_IMPLEMENTADO, "cadastrar_pista_menu()");
 }
 
 void executar_corrida_menu(char *id_pista, char *ocorrencia, char *id_corredores, char *id_veiculos) {
@@ -540,9 +628,9 @@ void executar_corrida_menu(char *id_pista, char *ocorrencia, char *id_corredores
 /* Busca */
 void buscar_corredor_id_menu(char *id_corredor) {
 	corredores_index index;
-	strcpy(index.id_corredor, id_corredor);
-    corredores_index *found = busca_binaria((void*)&index, corredores_idx, qtd_registros_corredores, sizeof(corredores_index), qsort_corredores_idx, true, 0);
-	if (found == NULL || found->rrn < 0)
+	strcpy(index.id_corredor, id_corredor); // para a função de comparação, os objetos devem ser do mesmo tipo (struct _index)
+    corredores_index *found = busca_binaria((void*)&index, corredores_idx, qtd_registros_corredores, sizeof(corredores_index), qsort_corredores_idx, true, 0); // o cast no index é pra adaptar ao tipo do parâmetro mesmo
+	if (found == NULL || found->rrn < 0) // se não encontrar ou estiver deletado
 		printf(ERRO_REGISTRO_NAO_ENCONTRADO);
 	else
 		exibir_corredor(found->rrn);
@@ -550,7 +638,14 @@ void buscar_corredor_id_menu(char *id_corredor) {
 
 void buscar_pista_id_menu(char *id_pista) {
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "buscar_pista_id_menu()");
+	pistas_index index;
+	strcpy(index.id_pista, id_pista); 
+	pistas_index *found = busca_binaria((void *)&index, pistas_idx, qtd_registros_pistas, sizeof(pistas_index), qsort_pistas_idx, true, 0);
+	if (found == NULL || found->rrn < 0)
+		printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+	else 
+		exibir_pista(found->rrn);
+	// printf(ERRO_NAO_IMPLEMENTADO, "buscar_pista_id_menu()");
 }
 
 void buscar_pista_nome_menu(char *nome_pista) {
@@ -638,7 +733,12 @@ void imprimir_veiculos_idx_menu() {
 
 void imprimir_pistas_idx_menu() {
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_pistas_idx_menu()");
+	if (pistas_idx == NULL || qtd_registros_pistas == 0)
+		printf(ERRO_ARQUIVO_VAZIO);
+	else
+		for (unsigned i = 0; i < qtd_registros_pistas; ++i)
+			printf("%s, %d\n", pistas_idx[i].id_pista, pistas_idx[i].rrn);
+	// printf(ERRO_NAO_IMPLEMENTADO, "imprimir_pistas_idx_menu()");
 }
 
 void imprimir_corridas_idx_menu() {
@@ -649,7 +749,12 @@ void imprimir_corridas_idx_menu() {
 /* Imprimir índices secundários */
 void imprimir_nome_pista_idx_menu() {
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_nome_pista_idx_menu()");
+	if (nome_pista_idx == NULL || qtd_registros_pistas == 0) 
+		printf(ERRO_ARQUIVO_VAZIO);
+	else 
+		for (unsigned i = 0; i < qtd_registros_pistas; ++i) 
+			printf("%s, %s\n", nome_pista_idx[i].nome, nome_pista_idx[i].id_pista);
+	// printf(ERRO_NAO_IMPLEMENTADO, "imprimir_nome_pista_idx_menu()");
 }
 
 void imprimir_preco_veiculo_idx_menu() {
