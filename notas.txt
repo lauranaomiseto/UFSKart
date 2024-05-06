@@ -1,14 +1,11 @@
-- função escrever_registro_corredor: a lógica pra posição da barra não está diferente da do exemplo de arquivo de dados no doc?
-
 - função busca_binaria_com_reps: o que é o parâmetro int retorno_se_nao_encontrado?
 
-- [c] funcção cadastrar_corredor_menu: preciso inicializar as strings dos veículos?
+- função listar_veiculos_compra_menu: não precisa testar se o id_corredor é válido?
 
-- [c] para realização da busca binária, levando em consideração as funções de comparação elaboradas, é necessário transferir a chave de busca para uma struct adequada e utilizar essa struct como argumento da função, ou é correto passar a chave diretamente? (para verificação de chaves repetidas nas funções de cadastro, utilizei a chave diretamente, mas nas funções busca, a implementação veio com a passagem das chaves para a struct)
+- testes/out/output6.txt: a saída para a listagem dos veículos com preço <= ao saldo de um determinado corredor (listar_veiculos_compra_menu) não está ordenada. Se mantemos os índices sempre ordenados pela chave (id_veiculo), como a saída do teste apresenta uma listagem não ordenada?
 
-- função liberar_espaco_menu: a atualização do arquivo de índice deve ser feita nessa própria função ou posso chamar a função de criar_corredores_idx? (abordar problema da mensagem de sucesso)
+- função criar_corridas_idx: o critério de ordenação das corridas é a ocorrência? Ou outra chave?
 
-remover_corredor_menu, liberar_espaco_menu
+listar_veiculos_compra_menu, exibir_veiculo, buscar_pista_nome_menu, imprimir_corridas_idx_menu, criar_corridas_idx, recuperar_registro_corrida
 
-+ correção da utilização da função busca_binaria - passagem da chave para o struct adequado, que por sua vez é utilizado como argumento key; 
-
++ correção das funções: criação de índices - remoção da verificação de registro excluído para veículos, pistas e corridas (não há operação de remoção para elas), busca_binaria_com_reps - ajuste no cálculo do intervalo de busca (checagem de paridade);

@@ -125,12 +125,7 @@ void criar_veiculos_idx() {
 
 	for (unsigned i = 0; i < qtd_registros_veiculos; ++i) {
 		Veiculo v = recuperar_registro_veiculo(i);
-
-		if (strncmp(v.id_veiculo, "*|", 2) == 0)
-			veiculos_idx[i].rrn = -1;
-		else 
-			veiculos_idx[i].rrn = i;
-		
+		veiculos_idx[i].rrn = i;
 		strcpy(veiculos_idx[i].id_veiculo, v.id_veiculo);
 	}
 
@@ -152,12 +147,7 @@ void criar_pistas_idx() {
 
 	for (unsigned i = 0; i < qtd_registros_pistas; ++i) {
 		Pista p = recuperar_registro_pista(i);
-
-		if (strncmp(p.id_pista, "*|", 2) == 0 ) 
-			pistas_idx[i].rrn = -1;
-		else 	
-			pistas_idx[i].rrn = i;
-		
+		pistas_idx[i].rrn = i;
 		strcpy(pistas_idx[i].id_pista, p.id_pista);
 	}
 
@@ -169,7 +159,25 @@ void criar_pistas_idx() {
 
 void criar_corridas_idx() {
     /*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "criar_corridas_idx()");
+	if (!corridas_idx)
+		corridas_idx = malloc(MAX_REGISTROS * sizeof(corridas_index));
+
+	if (!corridas_idx) {
+		printf(ERRO_MEMORIA_INSUFICIENTE);
+		exit(1);
+	}
+
+	for (unsigned i = 0; i < qtd_registros_corridas; ++i) {
+		Corrida c = recuperar_registro_corrida(i);
+		corridas_idx[i].rrn = i;
+		strcpy(corridas_idx[i].id_pista, c.id_pista);
+		strcpy(corridas_idx[i].ocorrencia, c.ocorrencia);
+	}
+
+	qsort(corridas_idx, qtd_registros_corridas, sizeof(corridas_index), qsort_data_idx);
+	printf(INDICE_CRIADO, "corridas_idx");
+
+	// printf(ERRO_NAO_IMPLEMENTADO, "criar_corridas_idx()");
 }
 
 void criar_nome_pista_idx() {
@@ -238,9 +246,15 @@ bool exibir_corredor(int rrn) {
 
 bool exibir_veiculo(int rrn) {
     /*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "exibir_veiculo()");
+	if (rrn < 0)
+		return false;
 	
-	return false;
+	Veiculo v = recuperar_registro_veiculo(rrn);
+
+	printf("%s, %s, %s, %s, %d, %d, %d, %.2lf\n", v.id_veiculo, v.marca, v.modelo, v.poder, v.velocidade, v.aceleracao, v.peso, v.preco);
+
+	// printf(ERRO_NAO_IMPLEMENTADO, "exibir_veiculo()");
+	return true;
 }
 
 bool exibir_pista(int rrn) {
@@ -352,7 +366,15 @@ Corrida recuperar_registro_corrida(int rrn) {
 	Corrida c;
 
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "recuperar_registro_corrida()");
+	char temp[TAM_REGISTRO_CORRIDA + 1];
+	strncpy(temp, ARQUIVO_CORRIDAS + (rrn * TAM_REGISTRO_CORRIDA), TAM_REGISTRO_CORRIDA);
+
+	strncpy(c.id_pista, temp, 8);
+	strncpy(c.ocorrencia, temp + 8, 12);
+	strncpy(c.id_corredores, temp + 8 + 12, 66);
+	strncpy(c.id_veiculos, temp + 8 + 12 + 66, 42);
+
+	// printf(ERRO_NAO_IMPLEMENTADO, "recuperar_registro_corrida()");
 
 	return c;
 }
@@ -681,7 +703,22 @@ void buscar_pista_id_menu(char *id_pista) {
 
 void buscar_pista_nome_menu(char *nome_pista) {
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "buscar_pista_nome_menu()");
+	// busca pelo nome no índice secundário nome_pista_idx
+	nome_pista_index index_nome_pista;
+	strcpy(index_nome_pista.nome, nome_pista);
+	nome_pista_index *found_nome_pista = busca_binaria((void *)&index_nome_pista, nome_pista_idx, qtd_registros_pistas, sizeof(nome_pista_index), qsort_nome_pista_idx, true, 0);
+	if(found_nome_pista) {
+		// busca pelo id encontrado no índice primário pistas_idx
+		pistas_index index_pista;
+		strcpy(index_pista.id_pista, found_nome_pista->id_pista);
+		pistas_index *found_pista = busca_binaria((void *)&index_pista, pistas_idx, qtd_registros_pistas, sizeof(pistas_index), qsort_pistas_idx, true, 0);
+
+		exibir_pista(found_pista->rrn);
+	}
+	else 
+		printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+
+	// printf(ERRO_NAO_IMPLEMENTADO, "buscar_pista_nome_menu()");
 }
 
 /* Listagem */
@@ -700,7 +737,27 @@ void listar_corredores_modelo_menu(char *modelo){
 
 void listar_veiculos_compra_menu(char *id_corredor) {
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "listar_veiculos_compra_menu()");
+	corredores_index index;
+	strcpy(index.id_corredor, id_corredor); 
+    corredores_index *found = busca_binaria((void*)&index, corredores_idx, qtd_registros_corredores, sizeof(corredores_index), qsort_corredores_idx, false, 0); 
+	if (found == NULL || found->rrn < 0) // se o id do corredor for inválido
+		printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+	else {
+		Corredor c = recuperar_registro_corredor(found->rrn);
+		Veiculo v;
+		int cont = 0;
+		
+		for(unsigned i = 0; i < qtd_registros_veiculos; ++i) {
+			v = recuperar_registro_veiculo(i);
+			if (v.preco <= c.saldo) {
+				cont++;
+				exibir_veiculo(i);
+			}
+		}
+		if (!cont) 
+			printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+	}
+	// printf(ERRO_NAO_IMPLEMENTADO, "listar_veiculos_compra_menu()");
 }
 
 void listar_corridas_periodo_menu(char *data_inicio, char *data_fim) {
@@ -804,7 +861,14 @@ void imprimir_pistas_idx_menu() {
 
 void imprimir_corridas_idx_menu() {
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_corridas_idx_menu()");
+
+	if (corridas_idx == NULL || qtd_registros_corridas == 0)
+		printf(ERRO_ARQUIVO_VAZIO);
+	else
+		for (unsigned i = 0; i < qtd_registros_corridas; ++i) 
+			printf("%s, %s, %d\n", corridas_idx[i].ocorrencia, corridas_idx[i].id_pista, corridas_idx[i].rrn);
+
+	// printf(ERRO_NAO_IMPLEMENTADO, "imprimir_corridas_idx_menu()");
 }
 
 /* Imprimir índices secundários */
@@ -877,7 +941,7 @@ void* busca_binaria_com_reps(const void *key, const void *base0, size_t nmemb, s
 		printf(REGS_PERCORRIDOS);
 	}
 	while(imin <= imax){
-		if ((imax+1)%2 == 0) // número de elementos no intervalo é par
+		if ((imax-imin+1)%2 == 0) // número de elementos no intervalo é par
 			imid = ((imin + imax)/2) + 1; // sempre escolher o mais a direita
 		else // número de elementos no intervalo é ímpar
 			imid = (imin + imax)/2; 
