@@ -2,16 +2,13 @@
 
 - função busca_binaria_com_reps: o que é o parâmetro int retorno_se_nao_encontrado?
 
-- função cadastrar_%_menu: não deve haver um teste para verificar se a quantidade de registros ultrapassou o MAX_REGISTROS? Se sim, o erro apresentado pode ser o ERRO_MEMORIA_INSUFICIENTE?
-
 - [c] funcção cadastrar_corredor_menu: preciso inicializar as strings dos veículos?
 
-- função cadastrar_veiculo_menu: qual chave utilizar para checar tentativa de inserção repetida? devo seguir as instruções do doc e fazer com id_veiculo?
+- [c] para realização da busca binária, levando em consideração as funções de comparação elaboradas, é necessário transferir a chave de busca para uma struct adequada e utilizar essa struct como argumento da função, ou é correto passar a chave diretamente? (para verificação de chaves repetidas nas funções de cadastro, utilizei a chave diretamente, mas nas funções busca, a implementação veio com a passagem das chaves para a struct)
 
+- função liberar_espaco_menu: a atualização do arquivo de índice deve ser feita nessa própria função ou posso chamar a função de criar_corredores_idx? (abordar problema da mensagem de sucesso)
 
-SET ARQUIVO_CORREDORES TO 'dados/corredores.dat';
-SET ARQUIVO_VEICULOS TO 'dados/veiculos.dat';
-SET ARQUIVO_PISTAS TO 'dados/pistas.dat';
-SET ARQUIVO_CORRIDAS TO 'dados/corridas.dat';
+remover_corredor_menu, liberar_espaco_menu
 
++ correção da utilização da função busca_binaria - passagem da chave para o struct adequado, que por sua vez é utilizado como argumento key; 
 

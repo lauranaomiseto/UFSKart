@@ -452,7 +452,11 @@ void escrever_registro_corrida(Corrida i, int rrn) {
 /* Funções principais */
 void cadastrar_corredor_menu(char *id_corredor, char *nome, char *apelido){
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	if (!busca_binaria(id_corredor, corredores_idx, qtd_registros_corredores, sizeof(corredores_index), qsort_corredores_idx, false, 0)) { // se não encontrar, realiza o cadastro
+	corredores_index index;
+	strcpy(index.id_corredor, id_corredor);
+	corredores_index *found = busca_binaria((void *)&index, corredores_idx, qtd_registros_corredores, sizeof(corredores_index), qsort_corredores_idx, false, 0);
+	
+	if (!found) { // se não encontrar, realiza o cadastro
 		if (qtd_registros_corredores < MAX_REGISTROS) { // se ainda não atingiu o número máximo de registros
 			// adicionado no arquivo de dados	
 			Corredor novo_corredor;
@@ -487,7 +491,28 @@ void cadastrar_corredor_menu(char *id_corredor, char *nome, char *apelido){
 
 void remover_corredor_menu(char *id_corredor) {
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "remover_corredor_menu()");
+	corredores_index index;
+	strcpy(index.id_corredor, id_corredor);
+	corredores_index *found = busca_binaria((void *)&index, corredores_idx, qtd_registros_corredores, sizeof(corredores_index), qsort_corredores_idx, false, 0);
+
+	if (found) {
+		// marcando registro como exluído no arquivo de dados		
+		Corredor c;
+		c = recuperar_registro_corredor(found->rrn);
+		c.id_corredor[0] = '*';
+		c.id_corredor[1] = '|';
+
+		escrever_registro_corredor(c, found->rrn);
+
+		// marcando registro como escluído no "arquivo"/estrutura de índice primário
+		found->rrn = -1;
+
+		printf(SUCESSO);
+	}	
+	else 
+		printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+
+	// printf(ERRO_NAO_IMPLEMENTADO, "remover_corredor_menu()");
 }
 
 void adicionar_saldo_menu(char *id_corredor, double valor) {
@@ -496,17 +521,19 @@ void adicionar_saldo_menu(char *id_corredor, double valor) {
 
 void adicionar_saldo(char *id_corredor, double valor, bool flag){
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	corredores_index *corredor_index = (corredores_index *) busca_binaria(id_corredor, corredores_idx, qtd_registros_corredores, sizeof(corredores_index), qsort_corredores_idx, false, 0);
-	if (corredor_index) { // se encontrar, realiza a adição de saldo
+	corredores_index index;
+	strcpy(index.id_corredor, id_corredor);
+	corredores_index *found = busca_binaria((void *)&index, corredores_idx, qtd_registros_corredores, sizeof(corredores_index), qsort_corredores_idx, false, 0);
+	if (found) { // se encontrar, realiza a adição de saldo
 		if (valor > 0) {
 			Corredor c;
-			c = recuperar_registro_corredor(corredor_index->rrn);
+			c = recuperar_registro_corredor(found->rrn);
 			if (valor + c.saldo > 9999999999.99) 
 				c.saldo = 9999999999.99;
 			else 
 				c.saldo += valor;
 
-			escrever_registro_corredor(c, corredor_index->rrn);
+			escrever_registro_corredor(c, found->rrn);
 			printf(SUCESSO);
 		}
 		else 
@@ -527,7 +554,11 @@ void cadastrar_veiculo_menu(char *marca, char *modelo, char *poder, int velocida
 	char id_veiculo[TAM_ID_VEICULO]; // TAM_ID_VEICULO já considera o byte final pro \0
 	sprintf(id_veiculo, "%07d", qtd_registros_veiculos); // formatando o id_veiculo
 
-	if (!busca_binaria(id_veiculo, veiculos_idx, qtd_registros_veiculos, sizeof(veiculos_index), qsort_veiculos_idx, false, 0)) {
+	veiculos_index index;
+	strcpy(index.id_veiculo, id_veiculo);
+	veiculos_index *found = busca_binaria((void *)&index, veiculos_idx, qtd_registros_veiculos, sizeof(veiculos_index), qsort_veiculos_idx, false, 0);
+
+	if (!found) {
 		if (qtd_registros_veiculos < MAX_REGISTROS) {
 			// adicionando no arquivo de dados
 			Veiculo novo_veiculo;
@@ -680,7 +711,37 @@ void listar_corridas_periodo_menu(char *data_inicio, char *data_fim) {
 /* Liberar espaço */
 void liberar_espaco_menu() {
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "liberar_espaco_menu()");
+	unsigned i = 0, qtd_espacos_livres = 0;
+	int i_livre = -1; // variável que indica o início do intervalo de blocos livres 
+	while (i < qtd_registros_corredores) { 
+		Corredor c = recuperar_registro_corredor(i);
+		if (strncmp(c.id_corredor, "*|", 2) == 0) { // se corredor foi removido
+			if (!qtd_espacos_livres) { // e não há espaço livre
+				i_livre = i; // "inicializa" a a variável livre_i
+			}
+			qtd_espacos_livres++;			
+		}
+		else if (qtd_espacos_livres) { // se o corredor não foi removido e há espaço livre para movê-lo
+			escrever_registro_corredor(c, i_livre); 
+			// printf("movendo %s de [%d] para [%d]\n", c.nome, i, i_livre);
+			i_livre++;
+		}
+		i++;
+	}
+	qtd_registros_corredores -= qtd_espacos_livres;
+	ARQUIVO_CORREDORES[qtd_registros_corredores*TAM_REGISTRO_CORREDOR] = '\0';
+
+	// recriando o arquivo de índice (não utilizei a função criar_corredor_idx porque ao final ele sempre exibe uma mensagem indesejada neste caso)
+    for (unsigned i = 0; i < qtd_registros_corredores; ++i) { // percorre corredores já existentes no arquivo de dados e preenche o arquivo de indices com base neles
+        Corredor c = recuperar_registro_corredor(i);
+        corredores_idx[i].rrn = i;
+        strcpy(corredores_idx[i].id_corredor, c.id_corredor);
+    }
+    qsort(corredores_idx, qtd_registros_corredores, sizeof(corredores_index), qsort_corredores_idx); // mantém uma ordenação dos índices
+
+	
+	printf(SUCESSO);
+	// printf(ERRO_NAO_IMPLEMENTADO, "liberar_espaco_menu()");
 }
 
 /* Imprimir arquivos de dados */
@@ -780,7 +841,12 @@ void imprimir_corredor_veiculos_primario_idx_menu(){
 /* Liberar memória e encerrar programa */
 void liberar_memoria_menu() {
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "liberar_memoria_menu()");
+	free(corredores_idx);
+	free(veiculos_idx);
+	free(pistas_idx);
+	free(nome_pista_idx);
+	free(preco_veiculo_idx);	
+	// printf(ERRO_NAO_IMPLEMENTADO, "liberar_memoria_menu()");
 }
 
 void inverted_list_insert(char *chave_secundaria, char *chave_primaria, inverted_list *t) {
