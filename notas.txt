@@ -6,6 +6,7 @@
 
 - função criar_corridas_idx: o critério de ordenação das corridas é a ocorrência? Ou outra chave?
 
-listar_veiculos_compra_menu, exibir_veiculo, buscar_pista_nome_menu, imprimir_corridas_idx_menu, criar_corridas_idx, recuperar_registro_corrida
 
-+ correção das funções: criação de índices - remoção da verificação de registro excluído para veículos, pistas e corridas (não há operação de remoção para elas), busca_binaria_com_reps - ajuste no cálculo do intervalo de busca (checagem de paridade);
+criar_corredor_veiculos_idx, qsort_corredor_veiculos_secundario_idx, comprar_veiculo_menu, imprimir_corredor_veiculos_secundario_idx_menu, imprimir_corredor_veiculos_primario_idx_menu
+
++ função liberar_memoria_menu - adição de free para o índice corridas, corredor veículos (secundário e primário)
