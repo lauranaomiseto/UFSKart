@@ -6,7 +6,9 @@
 
 - função criar_corridas_idx: o critério de ordenação das corridas é a ocorrência? Ou outra chave?
 
+- teste/out/output8.txt: a saída para a listagem dos corredores proprietários de um determinado modelo de veículo (listar_corredores_modelo_menu) exibe uma sequência de registros percorridos. 
 
-criar_corredor_veiculos_idx, qsort_corredor_veiculos_secundario_idx, comprar_veiculo_menu, imprimir_corredor_veiculos_secundario_idx_menu, imprimir_corredor_veiculos_primario_idx_menu
 
-+ função liberar_memoria_menu - adição de free para o índice corridas, corredor veículos (secundário e primário)
+listar_corredores_modelo_menu
+
++ correção na função comprar_veiculo_menu - adição de parâmetros pro printf do ERRO_VEICULO_REPETIDO;
