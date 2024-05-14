@@ -1,14 +1,6 @@
 - função busca_binaria_com_reps: o que é o parâmetro int retorno_se_nao_encontrado?
 
-- função listar_veiculos_compra_menu: não precisa testar se o id_corredor é válido?
-
-- testes/out/output6.txt: a saída para a listagem dos veículos com preço <= ao saldo de um determinado corredor (listar_veiculos_compra_menu) não está ordenada. Se mantemos os índices sempre ordenados pela chave (id_veiculo), como a saída do teste apresenta uma listagem não ordenada?
-
 - função criar_corridas_idx: o critério de ordenação das corridas é a ocorrência? Ou outra chave?
 
-- teste/out/output8.txt: a saída para a listagem dos corredores proprietários de um determinado modelo de veículo (listar_corredores_modelo_menu) exibe uma sequência de registros percorridos. 
 
-
-listar_corredores_modelo_menu
-
-+ correção na função comprar_veiculo_menu - adição de parâmetros pro printf do ERRO_VEICULO_REPETIDO;
++ correção da função listar_veiculos_compra_menu - listagem dos veículos ordenados pelo preço; correção de warning na função busca_binaria_com_reps; recriação do índice corredor_veiculos_idx na função liberar_espaco_menu.

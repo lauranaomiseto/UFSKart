@@ -921,17 +921,18 @@ void listar_veiculos_compra_menu(char *id_corredor) {
 		printf(ERRO_REGISTRO_NAO_ENCONTRADO);
 	else {
 		Corredor c = recuperar_registro_corredor(found->rrn);
-		Veiculo v;
+		veiculos_index index;
+		veiculos_index *found = NULL;
 		int cont = 0;
 		
 		for(unsigned i = 0; i < qtd_registros_veiculos; ++i) {
-			v = recuperar_registro_veiculo(i);
-			if (v.preco <= c.saldo) {
-				cont++;
-				exibir_veiculo(i);
+			if (preco_veiculo_idx[i].preco <= c.saldo) {
+				strcpy(index.id_veiculo, preco_veiculo_idx[i].id_veiculo);
+				found = busca_binaria((void *)&index, veiculos_idx, qtd_registros_veiculos, sizeof(veiculos_index), qsort_veiculos_idx, false, 0);
+				exibir_veiculo(found->rrn);
 			}
 		}
-		if (!cont) 
+		if (!found) 
 			printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
 	}
 	// printf(ERRO_NAO_IMPLEMENTADO, "listar_veiculos_compra_menu()");
@@ -965,14 +966,54 @@ void liberar_espaco_menu() {
 	qtd_registros_corredores -= qtd_espacos_livres;
 	ARQUIVO_CORREDORES[qtd_registros_corredores*TAM_REGISTRO_CORREDOR] = '\0';
 
-	// recriando o arquivo de índice (não utilizei a função criar_corredor_idx porque ao final ele sempre exibe uma mensagem indesejada neste caso)
+	// recriando o arquivos de índice (corredores_idx e corredor_veiculos_idx)
     for (unsigned i = 0; i < qtd_registros_corredores; ++i) { // percorre corredores já existentes no arquivo de dados e preenche o arquivo de indices com base neles
         Corredor c = recuperar_registro_corredor(i);
+
+		// recriando arquivo de índice corredores_idx
         corredores_idx[i].rrn = i;
         strcpy(corredores_idx[i].id_corredor, c.id_corredor);
-    }
-    qsort(corredores_idx, qtd_registros_corredores, sizeof(corredores_index), qsort_corredores_idx); // mantém uma ordenação dos índices
 
+		// recriando arquivo de índice corredor_veiculos_idx (secundário e primário)
+		corredor_veiculos_idx.qtd_registros_secundario = 0;
+		corredor_veiculos_idx.qtd_registros_primario = 0;
+		for (unsigned j = 0; j < QTD_MAX_VEICULO; ++j) { // percorre os veículos do corredor
+			if (strlen(c.veiculos[j])) { // verifica se o corredor possui véiculos
+				// verifica se o veículo já está listado no índice corredor veículos secundário
+				corredor_veiculos_secundario_index index_modelo;
+				strncpy(index_modelo.chave_secundaria, strupr(c.veiculos[j]), TAM_CHAVE_CORREDOR_VEICULO_SECUNDARIO_IDX);
+				corredor_veiculos_secundario_index *found_modelo = busca_binaria((void *)&index_modelo, corredor_veiculos_idx.corredor_veiculos_secundario_idx, corredor_veiculos_idx.qtd_registros_secundario, sizeof(corredor_veiculos_secundario_index), qsort_corredor_veiculos_secundario_idx, false, 0);
+				
+				if (!found_modelo) { // se o modelo ainda não estiver no índice corredor_veiculos_secundario_idx, adiciona o modelo nele
+					corredor_veiculos_secundario_index novo_modelo;
+					strncpy(novo_modelo.chave_secundaria, strupr(c.veiculos[j]), TAM_CHAVE_CORREDOR_VEICULO_SECUNDARIO_IDX);
+					novo_modelo.primeiro_indice = corredor_veiculos_idx.qtd_registros_primario;
+					corredor_veiculos_idx.corredor_veiculos_secundario_idx[corredor_veiculos_idx.qtd_registros_secundario] = novo_modelo;
+					corredor_veiculos_idx.qtd_registros_secundario++;
+
+					// ordenar índice corredor_veiculos_secundario_idx
+					qsort(corredor_veiculos_idx.corredor_veiculos_secundario_idx, corredor_veiculos_idx.qtd_registros_secundario, sizeof(corredor_veiculos_secundario_index), qsort_corredor_veiculos_secundario_idx);
+				}
+				else { // se o modelo já estiver no índice corredor_veiculos_secundario_idx, percorre índice corredor_veiculos_primario_idx para atualização do campo próx. registro
+					corredor_veiculos_primario_index *aux = &corredor_veiculos_idx.corredor_veiculos_primario_idx[found_modelo->primeiro_indice];
+					while (aux->proximo_indice != -1) {
+						aux = &corredor_veiculos_idx.corredor_veiculos_primario_idx[aux->proximo_indice];
+					}
+					aux->proximo_indice = corredor_veiculos_idx.qtd_registros_primario;
+				}
+
+				// adiciona o corredor/proprietario no índice corredor_veiculos_primario_idx
+				corredor_veiculos_primario_index novo_proprietario;
+				strcpy(novo_proprietario.chave_primaria, c.id_corredor);
+				novo_proprietario.proximo_indice = -1;
+				corredor_veiculos_idx.corredor_veiculos_primario_idx[corredor_veiculos_idx.qtd_registros_primario] = novo_proprietario;
+				corredor_veiculos_idx.qtd_registros_primario++;
+			}
+		}
+    }
+
+	// ordenar índice corredores_idx
+    qsort(corredores_idx, qtd_registros_corredores, sizeof(corredores_index), qsort_corredores_idx); // mantém uma ordenação dos índices
 	
 	printf(SUCESSO);
 	// printf(ERRO_NAO_IMPLEMENTADO, "liberar_espaco_menu()");
@@ -1124,7 +1165,7 @@ int inverted_list_primary_search(char result[][TAM_ID_CORREDOR], bool exibir_cam
 void* busca_binaria_com_reps(const void *key, const void *base0, size_t nmemb, size_t size, int (*compar)(const void *, const void *), bool exibir_caminho, int posicao_caso_repetido, int retorno_se_nao_encontrado) {
 	/*IMPLEMENTE A FUNÇÃO AQUI*/	
 	int imin = 0, imax = nmemb-1, imid, cmp; 
-	void *elemento;
+	const void *elemento;
 	// void *base = base0;
 
 	if(exibir_caminho){
@@ -1154,7 +1195,7 @@ void* busca_binaria_com_reps(const void *key, const void *base0, size_t nmemb, s
 			}
 			if(exibir_caminho)
 				printf("\n");
-			return elemento + posicao_caso_repetido * size; // retornando o elemento na posição informada relativa ao bloco de repetição 
+			return (void *)elemento + posicao_caso_repetido * size; // retornando o elemento na posição informada relativa ao bloco de repetição 
 		}
 	}
 	if(exibir_caminho)
