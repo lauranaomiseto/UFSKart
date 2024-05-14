@@ -3,4 +3,6 @@
 - função criar_corridas_idx: o critério de ordenação das corridas é a ocorrência? Ou outra chave?
 
 
-+ correção da função listar_veiculos_compra_menu - listagem dos veículos ordenados pelo preço; correção de warning na função busca_binaria_com_reps; recriação do índice corredor_veiculos_idx na função liberar_espaco_menu.
+criar_corridas_idx, qsort_corridas_idx, qsort_data_idx, executar_corrida_menu, escrever_registro_corrida
+
++ alteração na função adicionar_saldo - utilização do parâmetro flag para exibir ou não a mensagem de sucesso
