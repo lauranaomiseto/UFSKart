@@ -332,9 +332,15 @@ bool exibir_pista(int rrn) {
 
 bool exibir_corrida(int rrn) {
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "exibir_corrida()");
+	if (rrn < 0) 
+		return false;
 	
-	return false;
+	Corrida c = recuperar_registro_corrida(rrn);
+
+	printf("%s, %s, %s, %s\n", c.id_pista, c.ocorrencia, c.id_corredores, c.id_veiculos);
+	
+	// printf(ERRO_NAO_IMPLEMENTADO, "exibir_corrida()");
+	return true;
 }
 
 /* Recupera do arquivo o registro com o RRN informado
@@ -430,9 +436,13 @@ Corrida recuperar_registro_corrida(int rrn) {
 	strncpy(temp, ARQUIVO_CORRIDAS + (rrn * TAM_REGISTRO_CORRIDA), TAM_REGISTRO_CORRIDA);
 
 	strncpy(c.id_pista, temp, 8);
+	c.id_pista[8] = '\0';
 	strncpy(c.ocorrencia, temp + 8, 12);
+	c.ocorrencia[12] = '\0';
 	strncpy(c.id_corredores, temp + 8 + 12, 66);
+	c.id_corredores[66] = '\0';
 	strncpy(c.id_veiculos, temp + 8 + 12 + 66, 42);
+	c.id_veiculos[42] = '\0';
 
 	// printf(ERRO_NAO_IMPLEMENTADO, "recuperar_registro_corrida()");
 
@@ -536,7 +546,7 @@ void escrever_registro_corrida(Corrida i, int rrn) {
 	strcat(temp, i.id_corredores);
 	strcat(temp, i.id_veiculos);
 
-	strncpy(ARQUIVO_CORRIDAS + rrn*TAM_ARQUIVO_CORRIDAS, temp, TAM_REGISTRO_CORRIDA);
+	strncpy(ARQUIVO_CORRIDAS + rrn*TAM_REGISTRO_CORRIDA, temp, TAM_REGISTRO_CORRIDA);
 	// printf(ERRO_NAO_IMPLEMENTADO, "escrever_registro_corrida()");
 }
 
@@ -871,10 +881,8 @@ void executar_corrida_menu(char *id_pista, char *ocorrencia, char *id_corredores
 
 					if (proprietario) 
 						verificacao++;
-					else {
+					else 
 						printf(ERRO_CORREDOR_VEICULO, c.id_corredor, v.id_veiculo);
-						break;
-					}
 				}
 				else {
 					printf(ERRO_REGISTRO_NAO_ENCONTRADO);
@@ -1045,7 +1053,6 @@ void listar_veiculos_compra_menu(char *id_corredor) {
 		Corredor c = recuperar_registro_corredor(found->rrn);
 		veiculos_index index;
 		veiculos_index *found = NULL;
-		int cont = 0;
 		
 		for(unsigned i = 0; i < qtd_registros_veiculos; ++i) {
 			if (preco_veiculo_idx[i].preco <= c.saldo) {
@@ -1062,7 +1069,32 @@ void listar_veiculos_compra_menu(char *id_corredor) {
 
 void listar_corridas_periodo_menu(char *data_inicio, char *data_fim) {
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "listar_corridas_periodo_menu()");
+
+	// reordenando o índice corridas_idx pela ocorrência/data
+	qsort(corridas_idx, qtd_registros_corridas, sizeof(corridas_index), qsort_data_idx);
+
+	corridas_index index, *found;
+	strcpy(index.ocorrencia, data_inicio);
+	found = busca_binaria_com_reps((void *)&index, corridas_idx, qtd_registros_corridas, sizeof(corridas_index), qsort_data_idx, true, -1, 1);
+
+	if (found) {
+		if (strcmp(found->ocorrencia, data_fim) <= 0) { // se a ocorrência estiver dentro do intervalo
+			for (unsigned i = (found - corridas_idx)/sizeof(corridas_index); i < qtd_registros_corridas && strcmp(corridas_idx[i].ocorrencia, data_fim) <= 0; i++) {
+				exibir_corrida(corridas_idx[i].rrn);
+			} 
+		}
+		else {// se houver ocorrências maiores/depois da data_inicio, mas elas forem maiores que a data_fim (fora do intervalo)
+			printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+			printf("aqui\n");
+		}
+	}
+	else // se a busca biária retornar NULL, significa que não há registro com a ocorrência da data_inicio, nem registro com ocorrência maior/depois dela
+		printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+
+	// reordenando o índice corridas_idx por sua chave (id_pista e ocorrencia);
+	qsort(corridas_idx, qtd_registros_corridas, sizeof(corridas_index), qsort_corridas_idx);
+
+	// printf(ERRO_NAO_IMPLEMENTADO, "listar_corridas_periodo_menu()");
 }
 
 /* Liberar espaço */
@@ -1311,17 +1343,53 @@ void* busca_binaria_com_reps(const void *key, const void *base0, size_t nmemb, s
 			imin = imid + 1;
 		}
 		else { // key == elemento
-			// percorrendo até o elemento mais a esquerda (primeiro da seq. de repetidos)
-			while((*compar)(key, elemento - size) == 0) {
-				elemento = elemento - size;
-			}
 			if(exibir_caminho)
 				printf("\n");
-			return (void *)elemento + posicao_caso_repetido * size; // retornando o elemento na posição informada relativa ao bloco de repetição 
+
+			if (posicao_caso_repetido < 0) { // primeiro elemento do bloco de repetição
+				// percorrendo até o elemento mais a esquerda (primeiro da seq. de repetidos) 
+				while(base0 <= elemento - size && (*compar)(key, elemento - size) == 0) {
+					elemento = elemento - size;
+				}
+			}
+			else if (posicao_caso_repetido > 0) { // último elemento do bloco de repetição
+				while(base0 + (size * nmemb) >= elemento + size && (*compar)(key, elemento + size) == 0) {
+					elemento = elemento + size;
+				}
+			}
+			else { // elemento do meio
+				const void *elemento_ini = elemento;
+				const void *elemento_fin = elemento;
+
+				while((*compar)(key, elemento_ini - size) == 0) {
+					elemento_ini = elemento_ini - size;
+				}
+
+				while((*compar)(key, elemento_fin + size) == 0) {
+					elemento_fin = elemento_fin + size;
+				}
+
+				elemento = elemento_ini + (int)(((elemento_fin - elemento_ini)/size)/2) * size;
+			}
+			
+			return (void *)elemento; 
 		}
 	}
 	if(exibir_caminho)
 		printf("\n");
+	
+	if (retorno_se_nao_encontrado < 0) { // retonrar elemento imediatamente menor que a chave (piso)
+		if (cmp > 0) // se a chave já era maior que o elemento
+			return (void *) elemento;
+		else if (base0 <= elemento - size)
+			return (void *) elemento - size;
+	}
+	else if (retorno_se_nao_encontrado > 0) { // retonrar elemento imediatamente maior que a chave (teto)
+		if (cmp < 0) // se a chave já era menor que o elemento
+			return (void *) elemento;
+		else if (base0 + (size * nmemb) >= elemento + size)
+			return (void *) elemento + size;
+	}
 	
 	return NULL;
 	

@@ -1,8 +1,4 @@
-- função busca_binaria_com_reps: o que é o parâmetro int retorno_se_nao_encontrado?
 
-- função criar_corridas_idx: o critério de ordenação das corridas é a ocorrência? Ou outra chave?
+listar_corridas_periodo_menu, exibir_corrida
 
-
-criar_corridas_idx, qsort_corridas_idx, qsort_data_idx, executar_corrida_menu, escrever_registro_corrida
-
-+ alteração na função adicionar_saldo - utilização do parâmetro flag para exibir ou não a mensagem de sucesso
++ correção da função executar_corrida_menu - retirada de break para listar todos os erros ERRO_CORREDOR_VEICULO; correção da função escrever_registro_corrida - correção do tamanho do registro enviado para a função strncpy; correção da função busca_binaria_com_reps - utilização dos parâmetros posicao_caso_repetido e retorno_se_nao_encontrado; correção da função recuperar_registro_corrida - adição manual do terminador nas strings.
